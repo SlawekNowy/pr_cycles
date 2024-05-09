@@ -207,7 +207,7 @@ os.chdir(tools)
 rr_tool_root = tools +"/render_raytracing"
 if not Path(rr_tool_root).is_dir():
     print_msg("render_raytracing tool not found. Downloading...")
-    git_clone("https://github.com/Silverlan/render_raytracing.git")
+    git_clone("https://github.com/Slaweknowy/render_raytracing.git")
 
 os.chdir(rr_tool_root)
 reset_to_commit("f0223483207962d93a52b6e86df561b9439246b2")
@@ -219,7 +219,7 @@ unirender_root = root +"/external_libs/util_raytracing"
 if not Path(unirender_root).is_dir():
     print_msg("Unirender not found. Downloading...")
     os.chdir(root +"/external_libs")
-    git_clone("https://github.com/Silverlan/UniRender.git","util_raytracing")
+    git_clone("https://github.com/Slaweknowy/UniRender.git","util_raytracing")
 
 os.chdir(unirender_root)
 reset_to_commit("6dc26132832fe71c3663ed640ca772ece68812d6")
