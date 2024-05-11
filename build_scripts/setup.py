@@ -219,7 +219,7 @@ unirender_root = root +"/external_libs/util_raytracing"
 if not Path(unirender_root).is_dir():
     print_msg("Unirender not found. Downloading...")
     os.chdir(root +"/external_libs")
-    git_clone("https://github.com/Slaweknowy/UniRender.git","util_raytracing")
+    git_clone("https://github.com/Silverlan/UniRender.git","util_raytracing")
 
 os.chdir(unirender_root)
 reset_to_commit("6dc26132832fe71c3663ed640ca772ece68812d6")
