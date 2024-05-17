@@ -128,7 +128,7 @@ utilocio_root = root +"/external_libs/util_ocio"
 if not Path(utilocio_root).is_dir():
     print_msg("util_ocio not found. Downloading...")
     os.chdir(root +"/external_libs")
-    git_clone("https://github.com/Silverlan/util_ocio.git","util_ocio")
+    git_clone("https://github.com/Slaweknowy/util_ocio.git","util_ocio")
 
 cmake_args.append("-DDEPENDENCY_UTIL_OCIO_INCLUDE=" +utilocio_root +"/include")
 
