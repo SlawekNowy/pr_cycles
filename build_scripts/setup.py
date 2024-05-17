@@ -66,40 +66,14 @@ else:
 
 ########## OCIO ##########
 os.chdir(deps_dir)
-ocio_root = deps_dir +"/OpenColorIO"
-if not Path(ocio_root).is_dir():
-    print_msg("ocio not found. Downloading...")
-    git_clone("https://github.com/SlawekNowy/OpenColorIO.git")
-
-os.chdir(ocio_root)
-# Note: Version 2.2.0 of OpenColorIO introduces a zlib dependency, which causes conflicts with our zlib installation, so we're stuck
-# with the older version for now.
-#Should no longer happen with zlib bump.
-# TODO: minizip-ng broken
 print_msg("Build ocio")
-mkdir("build",cd=True)
-reset_to_commit("025e7c07794913a8cf8191247777393300797a0b")
-
-configArgs = []
+subprocess.run([vcpkg_root +"/vcpkg","install","opencolorio"],check=True)
 if platform == "linux":
-	configArgs.append("-DOCIO_BUILD_PYTHON=OFF")
-cmake_configure("..",generator,configArgs)
-cmake_build(build_config,["OpenColorIO"])
-
-if platform == "linux":
-	cp(ocio_root +"/build/include/OpenColorIO/OpenColorABI.h",ocio_root +"/include/OpenColorIO/")
-
-cp(ocio_root +"/build/include/OpenColorIO/OpenColorABI.h",ocio_root +"/include/OpenColorIO/")
-
-cmake_args.append("-DDEPENDENCY_OPENCOLORIO_INCLUDE=" +ocio_root +"/include")
-if platform == "linux":
-	if generator=="Ninja Multi-Config":
-		cmake_args.append("-DDEPENDENCY_OPENCOLORIO_LIBRARY=" +ocio_root +"/build/src/OpenColorIO/"+build_config +"/libOpenColorIO.so")
-	else:
-		cmake_args.append("-DDEPENDENCY_OPENCOLORIO_LIBRARY=" +ocio_root +"/build/src/OpenColorIO/libOpenColorIO.so")
+	cmake_args.append("-DDEPENDENCY_OPENCOLORIO_INCLUDE=" +deps_dir +"/vcpkg/installed/x64-linux/include")
+	cmake_args.append("-DDEPENDENCY_OPENCOLORIO_LIBRARY=" +deps_dir +"/vcpkg/installed/x64-linux/lib/libOpenColorIO.a")
 else:
-	cmake_args.append("-DDEPENDENCY_OPENCOLORIO_LIBRARY=" +ocio_root +"/build/src/OpenColorIO/" +build_config +"/OpenColorIO.lib")
-
+	cmake_args.append("-DDEPENDENCY_OPENCOLORIO_INCLUDE=" +deps_dir +"/vcpkg/installed/x64-windows/include")
+	cmake_args.append("-DDEPENDENCY_OPENCOLORIO_LIBRARY=" +deps_dir +"/vcpkg/installed/x64-windows/lib/OpenImageIO.lib")
 ########## OIIO ##########
 execbuildscript(os.path.dirname(os.path.realpath(__file__)) +"/build_oiio.py")
 os.chdir(deps_dir)
