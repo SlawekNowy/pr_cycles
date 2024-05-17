@@ -73,7 +73,7 @@ if platform == "linux":
 	cmake_args.append("-DDEPENDENCY_OPENCOLORIO_LIBRARY=" +deps_dir +"/vcpkg/installed/x64-linux/lib/libOpenColorIO.a")
 else:
 	cmake_args.append("-DDEPENDENCY_OPENCOLORIO_INCLUDE=" +deps_dir +"/vcpkg/installed/x64-windows/include")
-	cmake_args.append("-DDEPENDENCY_OPENCOLORIO_LIBRARY=" +deps_dir +"/vcpkg/installed/x64-windows/lib/OpenImageIO.lib")
+	cmake_args.append("-DDEPENDENCY_OPENCOLORIO_LIBRARY=" +deps_dir +"/vcpkg/installed/x64-windows/lib/OpenColorIO.lib")
 ########## OIIO ##########
 execbuildscript(os.path.dirname(os.path.realpath(__file__)) +"/build_oiio.py")
 os.chdir(deps_dir)
