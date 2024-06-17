@@ -114,6 +114,7 @@ args = vars(args)
 
 if build_all or args["build_cycles"]:
 	print_msg("Running cycles build script...")
+	cmake_args.append("-DPR_UNIRENDER_WITH_CYCLES=1")
 	execbuildscript(os.path.dirname(os.path.realpath(__file__)) +"/build_cycles.py")
 else:
 	print_msg("Downloading prebuilt cycles binaries...")
@@ -211,7 +212,7 @@ if not Path(rr_tool_root).is_dir():
     git_clone("https://github.com/Silverlan/render_raytracing.git")
 
 os.chdir(rr_tool_root)
-reset_to_commit("f0223483207962d93a52b6e86df561b9439246b2")
+reset_to_commit("92d2e11")
 
 additional_build_targets.append("render_raytracing")
 
@@ -223,6 +224,6 @@ if not Path(unirender_root).is_dir():
     git_clone("https://github.com/Slaweknowy/UniRender.git","util_raytracing")
 
 os.chdir(unirender_root)
-reset_to_commit("8b252cc232432022fabf6e5e24bb4fb8780da992")
+reset_to_commit("9475e0d94eb1f8455208dd1ffd9553c383edd513")
 
 cmake_args.append("-DDEPENDENCY_UTIL_RAYTRACING_INCLUDE=" +unirender_root +"/include")
