@@ -34,8 +34,10 @@ endif()
 # assets
 pr_install_directory("${CMAKE_CURRENT_LIST_DIR}/assets/" INSTALL_DIR "modules/")
 
-# render_raytracing tool
-pr_install_targets(render_raytracing render_raytracing_lib)
+if(PR_UNIRENDER_WITH_CYCLES)
+	# render_raytracing tool
+	pr_install_targets(render_raytracing render_raytracing_lib)
+endif()
 
 # Cycles
 if(PR_UNIRENDER_WITH_CYCLES)
