@@ -6,127 +6,27 @@ import subprocess
 
 # To update Cycles to a newer version, follow these steps:
 # - Find the latest stable release on Cycles on https://github.com/blender/cycles/tags
+# - Update the fork https://github.com/Silverlan/cycles to that commit
 # - Copy the commit id to "cycles_commit_sha" below
-# - Browse the files for the commit of that version and go to "src/util/version.h".
-# The value for "CYCLES_BLENDER_LIBRARIES_VERSION" is the version of Blender that
-# corresponds to this version of Cycles.
-# - Go to the Blender repository on GitHub: https://github.com/blender/blender/tags and
-# find the version that corresponds to CYCLES_BLENDER_LIBRARIES_VERSION
-# - Browse the files for the commit of that version and go to "build_files/build_environment/"
-# - Copy the file "install_deps.sh" to "build_scripts/cycles" of this repository and overwrite the existing file.
-# - Open the file in a text-editor and update the following entries:
-# - Change OCIO_VERSION to "2.2.0", unless the version is already newer
-# - Change USD_VERSION to "22.11", unless the version is already newer
-# - Change USD_VERSION_SHORT to "22.11", unless the version is already newer
-# - Find the value for OPENEXR_VERSION, note it down and save and close the file
-# - Go to the Imath repository on GitHub: https://github.com/AcademySoftwareFoundation/Imath/tags and
-# find the version that corresponds to OPENEXR_VERSION
-# - Copy the commit id to "imath_commit_sha" below
-cycles_commit_sha = "7cfe5570e835bd14c5ddc453e89fc6844e2b85ea" # Version 3.5.0
-imath_commit_sha = "90c47b4" # Version 3.1.5, has to match the OpenEXR version of install_deps.sh
-
-########## cycles dependencies ##########
-if platform == "linux":
-	# The prebuild binaries of the cycles build script are built using a pre-C++11 ABI, which makes them incompatible with Pragma.
-	# For this reason we have to build them ourselves manually.
-	sourceLocation = deps_dir +"/lib/source"
-	installLocation = deps_dir +"/lib/linux_x86_64" # Cycles will be looking for "deps/lib/${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}"
-	cyclesDepsInstallLocation = installLocation
-	args = [os.path.dirname(os.path.realpath(__file__)) +"/cycles/install_deps.sh",
-		"--build-boost","--build-oiio","--build-tbb","--build-alembic",
-		"--build-embree","--build-ocio","--build-openvdb","--build-osl",
-		"--build-osd","--build-oidn","--build-usd","--with-embree","--with-oidn",
-		"--build-nanovdb","--with-nanovdb",
-		"--source",sourceLocation,
-		"--install",installLocation]
-	if no_confirm:
-		args.append("--no-confirm")
-	if no_sudo:
-		args.append("--no-sudo")
-
-	subprocess.run(args,check=True)
-
-	cyclesDepsRoot = cyclesDepsInstallLocation
-else:
-	cyclesDepsRoot = deps_dir +"/lib/win64_vc15"
-
-########## Imath ##########
-if platform == "linux":
-	# OpenEXR used to come with Imath, but that changed with version 3, now Imath is a separate repository.
-	# Unfortunately cycles still expects Imath to reside with OpenEXR, so we have to download it manually
-	# and copy it over.
-	os.chdir(cyclesDepsInstallLocation)
-	imath_root = cyclesDepsInstallLocation +"/Imath"
-	if not Path(imath_root).is_dir():
-		print_msg("Imath not found. Downloading...")
-		git_clone("https://github.com/AcademySoftwareFoundation/Imath.git","Imath")
-
-	os.chdir(imath_root)
-	subprocess.run(["git","reset","--hard",imath_commit_sha],check=True)
-
-	print_msg("Build Imath")
-	mkdir("build",cd=True)
-
-	cmake_configure("..",generator)
-	cmake_build(build_config)
-
-	cp_dir(imath_root +"/src/Imath",installLocation +"/openexr/include/Imath")
-	cp(imath_root +"/build/config/ImathConfig.h",installLocation +"/openexr/include/Imath/")
-
-########## libjpeg-turbo ##########
-if platform == "linux":
-	os.chdir(cyclesDepsInstallLocation)
-	libjpeg_root = cyclesDepsInstallLocation +"/jpeg"
-	if not Path(libjpeg_root).is_dir():
-		print_msg("libjpeg-turbo not found. Downloading...")
-		git_clone("https://github.com/libjpeg-turbo/libjpeg-turbo.git","jpeg")
-
-	os.chdir(libjpeg_root)
-	subprocess.run(["git","reset","--hard","8162edd"],check=True)
-
-	print_msg("Build libjpeg-turbo")
-	mkdir("build",cd=True)
-
-	cmake_configure("..",generator)
-	cmake_build(build_config)
-
-########## libepoxy ##########
-if platform == "linux":
-	os.chdir(cyclesDepsInstallLocation)
-	libepoxy_root = cyclesDepsInstallLocation +"/epoxy"
-	if not Path(libepoxy_root).is_dir():
-		print_msg("libepoxy not found. Downloading...")
-		git_clone("https://github.com/anholt/libepoxy.git","epoxy")
-
-	os.chdir(libepoxy_root)
-	print_msg("Build libepoxy")
-	subprocess.run(["mkdir -p _build && cd _build && meson && ninja && sudo ninja install"],check=True,shell=True)
-
-########## libtiff ##########
-if platform == "linux":
-	os.chdir(cyclesDepsInstallLocation)
-	libtiff_root = cyclesDepsInstallLocation +"/tiff"
-	if not Path(libtiff_root).is_dir():
-		print_msg("libtiff not found. Downloading...")
-		http_extract("https://download.osgeo.org/libtiff/tiff-4.4.0.tar.gz",format="tar.gz")
-		os.rename("tiff-4.4.0","tiff")
-
-	os.chdir(libtiff_root)
-
-	print_msg("Build libtiff")
-	mkdir("build",cd=True)
-
-	cmake_configure("..",generator)
-	cmake_build(build_config)
+# - Update preprocessor definitions for cycles in CMakeLists.txt of external_libs/cycles/CMakeLists.txt
+# - Update the versions of tbb, oidn, ocio, oiio, opensubdiv libraries in setup.py to match cycles versions
+# - Go to https://github.com/blender/cycles/tree/main/lib for the commit of the cycles version
+#   - Grab the commit ids for linux_x64 and windows_x64 and apply them to cycles_lib_*_x64_commit_sha in setup.py
+cycles_commit_sha = "ee4a5f249e43e02aef439877e747f14fa5c8c3c9" # Version 4.1.1
 
 ########## cycles ##########
 os.chdir(deps_dir)
 cyclesRoot = deps_dir +"/cycles"
 if not Path(cyclesRoot).is_dir():
 	print_msg("cycles not found. Downloading...")
-	git_clone("https://github.com/blender/cycles.git")
+	git_clone("https://github.com/Silverlan/cycles.git")
 
 os.chdir(cyclesRoot)
+
+if platform == "linux":
+	cyclesDepsRoot = cyclesRoot +"/lib/linux_x64"
+else:
+	cyclesDepsRoot = cyclesRoot +"/lib/windows_x64"
 
 lastBuildCommit = None
 lastbuildshaFile = cyclesRoot +"/lastbuildsha"
@@ -193,6 +93,9 @@ else:
 	strIdx = open(kernelCmakePath, 'r').read().find('--allow-unsupported-compiler')
 	if strIdx == -1:
 		replace_text_in_file(kernelCmakePath,'${CUDA_NVCC_FLAGS}','${CUDA_NVCC_FLAGS} --allow-unsupported-compiler')
+
+print_msg("Download dependencies")
+subprocess.run(["make","update"],check=True,shell=True)
 
 print_msg("Build cycles")
 mkdir("build",cd=True)
@@ -270,8 +173,14 @@ if platform == "linux":
 	cmake_args.append("-DDEPENDENCY_CYCLES_LIBRARY_LOCATION=" +cyclesRoot +"/build/lib")
 
 	cmake_args.append("-DDEPENDENCY_CYCLES_TBB_LIBRARY=" +cyclesDepsRoot + "/tbb/lib/libtbb.so")
+	cmake_args.append("-DDEPENDENCY_CYCLES_EMBREE_LIBRARY=" +cyclesDepsRoot + "/embree/lib/libembree4.so")
+	cmake_args.append("-DDEPENDENCY_CYCLES_OPENCOLORIO_LIBRARY=" +cyclesDepsRoot + "/opencolorio/lib/libOpenColorIO.so")
+	cmake_args.append("-DDEPENDENCY_CYCLES_OPENIMAGEIO_LIBRARY=" +cyclesDepsRoot + "/OpenImageIO/lib/libOpenImageIO.so")
+	cmake_args.append("-DDEPENDENCY_CYCLES_OPENIMAGEDENOISE_LIBRARY=" +cyclesDepsRoot + "/openimagedenoise/lib/libopenimagedenoise.so")
+	cmake_args.append("-DDEPENDENCY_CYCLES_IMATH_LIBRARY=" +cyclesDepsRoot + "/imath/lib/libimath.so")
 	cmake_args.append("-DDEPENDENCY_JPEG_LIBRARY=" +cyclesDepsRoot + "/jpeg/build/libjpeg.a")
 	cmake_args.append("-DDEPENDENCY_TIFF_LIBRARY=" +cyclesDepsRoot + "/tiff/build/libtiff/libtiff.so")
+	cmake_args.append("-DDEPENDENCY_CYCLES_LPNG_LIBRARY=" +cyclesDepsRoot + "/png/lib/libpng.a")
 	cmake_args.append("-DDEPENDENCY_OPENEXR_IMATH_LIBRARY=" +cyclesDepsRoot + "/Imath/build/src/Imath/libImath-3_1.so")
 	cmake_args.append("-DDEPENDENCY_OPENEXR_UTIL_LIBRARY=" +cyclesDepsRoot + "/openexr/lib/libOpenEXR.so")
 	cmake_args.append("-DDEPENDENCY_OPENEXR_ILMTHREAD_LIBRARY=" +cyclesDepsRoot + "/openexr/lib/libIlmThread.so")
@@ -288,13 +197,19 @@ if platform == "linux":
 else:
 	cmake_args.append("-DDEPENDENCY_CYCLES_LIBRARY_LOCATION=" +cyclesRoot +"/build/lib/" +build_config +"")
 	cmake_args.append("-DDEPENDENCY_CYCLES_TBB_LIBRARY=" +cyclesDepsRoot + "/tbb/lib/tbb.lib")
+	cmake_args.append("-DDEPENDENCY_CYCLES_EMBREE_LIBRARY=" +cyclesDepsRoot + "/embree/lib/embree4.lib")
+	cmake_args.append("-DDEPENDENCY_CYCLES_OPENCOLORIO_LIBRARY=" +cyclesDepsRoot + "/opencolorio/lib/OpenColorIO.lib")
+	cmake_args.append("-DDEPENDENCY_CYCLES_OPENIMAGEIO_LIBRARY=" +cyclesDepsRoot + "/OpenImageIO/lib/OpenImageIO.lib")
+	cmake_args.append("-DDEPENDENCY_CYCLES_OPENIMAGEDENOISE_LIBRARY=" +cyclesDepsRoot + "/openimagedenoise/lib/openimagedenoise.lib")
+	cmake_args.append("-DDEPENDENCY_CYCLES_IMATH_LIBRARY=" +cyclesDepsRoot + "/imath/lib/imath.lib")
 	cmake_args.append("-DDEPENDENCY_OPENEXR_UTIL_LIBRARY=" +cyclesDepsRoot + "/openexr/lib/OpenEXRUtil_s.lib")
-	cmake_args.append("-DDEPENDENCY_OPENEXR_IMATH_LIBRARY=" +cyclesDepsRoot + "/imath/lib/Imath_s.lib")
+	cmake_args.append("-DDEPENDENCY_OPENEXR_IMATH_LIBRARY=" +cyclesDepsRoot + "/imath/lib/Imath.lib")
 	cmake_args.append("-DDEPENDENCY_OPENEXR_ILMTHREAD_LIBRARY=" +cyclesDepsRoot + "/openexr/lib/IlmThread_s.lib")
 	cmake_args.append("-DDEPENDENCY_OPENEXR_IEX_LIBRARY=" +cyclesDepsRoot + "/openexr/lib/Iex_s.lib")
 
 	cmake_args.append("-DDEPENDENCY_JPEG_LIBRARY=" +cyclesDepsRoot + "/jpeg/lib/libjpeg.lib")
 	cmake_args.append("-DDEPENDENCY_TIFF_LIBRARY=" +cyclesDepsRoot + "/tiff/lib/libtiff.lib")
+	cmake_args.append("-DDEPENDENCY_CYCLES_LPNG_LIBRARY=" +cyclesDepsRoot + "/png/lib/libpng.lib")
 
 additional_build_targets.append("UniRender_cycles")
 
