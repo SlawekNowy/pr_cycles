@@ -156,7 +156,7 @@ else:
 	ocio_root = deps_dir +"/OpenColorIO"
 	if not Path(ocio_root).is_dir():
 		print_msg("ocio not found. Downloading...")
-		git_clone("https://github.com/Silverlan/OpenColorIO.git")
+		git_clone("https://github.com/AcademySoftwareFoundation/OpenColorIO.git")
 
 	os.chdir(ocio_root)
 	# Note: Version 2.2.0 of OpenColorIO introduces a zlib dependency, which causes conflicts with our zlib installation, so we're stuck
@@ -165,7 +165,7 @@ else:
 	# TODO: minizip-ng broken
 	print_msg("Build ocio")
 	mkdir("build",cd=True)
-	reset_to_commit("8c767e5")
+	reset_to_commit("21f656f")
 
 	configArgs = []
 	if platform == "linux":
@@ -316,6 +316,6 @@ if not Path(unirender_root).is_dir():
     git_clone("https://github.com/Slaweknowy/UniRender.git","util_raytracing")
 
 os.chdir(unirender_root)
-reset_to_commit("a0b5189651b703b64c271687545c0a8bd94b395a")
+reset_to_commit("e7a440be54d36c943732cd773d53dee9c555df24")
 
 cmake_args.append("-DDEPENDENCY_UTIL_RAYTRACING_INCLUDE=" +unirender_root +"/include")
