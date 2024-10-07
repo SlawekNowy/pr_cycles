@@ -165,7 +165,7 @@ else:
 	# TODO: minizip-ng broken
 	print_msg("Build ocio")
 	mkdir("build",cd=True)
-	reset_to_commit("21f656f")
+	reset_to_commit("6998d6d3d7c6950cbb97317e2fa620c6c0ccb70a")
 
 	configArgs = []
 	if platform == "linux":
@@ -316,6 +316,6 @@ if not Path(unirender_root).is_dir():
     git_clone("https://github.com/Slaweknowy/UniRender.git","util_raytracing")
 
 os.chdir(unirender_root)
-reset_to_commit("6998d6d3d7c6950cbb97317e2fa620c6c0ccb70a")
+reset_to_commit("56a1aa68d1b5159567d1cd9b85a1aa50a73ee0f7")
 
 cmake_args.append("-DDEPENDENCY_UTIL_RAYTRACING_INCLUDE=" +unirender_root +"/include")
