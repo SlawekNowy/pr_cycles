@@ -5,10 +5,17 @@
 * Copyright (c) 2023 Silverlan
 */
 
-#include <util_raytracing/denoise.hpp>
+module;
+
+#include <pragma/entities/baseentity_handle.h>
+#include <pragma/entities/baseentity.h>
 #include <util_image_buffer.hpp>
 #include <sharedutils/util_parallel_job.hpp>
-#include "pr_cycles/scene.hpp"
+
+module pragma.modules.scenekit;
+
+import pragma.scenekit;
+import :scene;
 
 class DenoiseWorker : public util::ParallelWorker<std::shared_ptr<uimg::ImageBuffer>> {
   public:
@@ -24,8 +31,8 @@ class DenoiseWorker : public util::ParallelWorker<std::shared_ptr<uimg::ImageBuf
 DenoiseWorker::DenoiseWorker(uimg::ImageBuffer &imgBuffer) : m_imgBuffer {imgBuffer.shared_from_this()}
 {
 	AddThread([this]() {
-		unirender::denoise::Info denoiseInfo {};
-		auto success = unirender::denoise::denoise(denoiseInfo, *m_imgBuffer, nullptr, nullptr, [this](float progress) -> bool {
+		pragma::scenekit::denoise::Info denoiseInfo {};
+		auto success = pragma::scenekit::denoise::denoise(denoiseInfo, *m_imgBuffer, nullptr, nullptr, [this](float progress) -> bool {
 			UpdateProgress(progress);
 			return !IsCancelled();
 		});
@@ -36,4 +43,4 @@ DenoiseWorker::DenoiseWorker(uimg::ImageBuffer &imgBuffer) : m_imgBuffer {imgBuf
 }
 std::shared_ptr<uimg::ImageBuffer> DenoiseWorker::GetResult() { return m_imgBuffer; }
 
-util::ParallelJob<std::shared_ptr<uimg::ImageBuffer>> pragma::modules::cycles::denoise(uimg::ImageBuffer &imgBuffer) { return util::create_parallel_job<DenoiseWorker>(imgBuffer); }
+util::ParallelJob<std::shared_ptr<uimg::ImageBuffer>> pragma::modules::scenekit::denoise(uimg::ImageBuffer &imgBuffer) { return util::create_parallel_job<DenoiseWorker>(imgBuffer); }

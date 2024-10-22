@@ -302,7 +302,7 @@ if build_cycles:
         git_clone("https://github.com/Silverlan/render_raytracing.git")
 
     os.chdir(rr_tool_root)
-    reset_to_commit("92d2e11b409c17bc6aafc05606e36763f5c8b0dd")
+    reset_to_commit("10293584e1c4ae5d674dcdc9b3c82e354e561a11")
 
     additional_build_targets.append("render_raytracing")
 #else:
@@ -316,6 +316,6 @@ if not Path(unirender_root).is_dir():
     git_clone("https://github.com/Slaweknowy/UniRender.git","util_raytracing")
 
 os.chdir(unirender_root)
-reset_to_commit("56a1aa68d1b5159567d1cd9b85a1aa50a73ee0f7")
+reset_to_commit("932b161df373e293216b72a21c62df5b505ff003")
 
 cmake_args.append("-DDEPENDENCY_UTIL_RAYTRACING_INCLUDE=" +unirender_root +"/include")

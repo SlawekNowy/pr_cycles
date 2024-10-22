@@ -5,11 +5,10 @@
 * Copyright (c) 2023 Silverlan
 */
 
-#include "pr_cycles/scene.hpp"
-#include "util_raytracing/scene.hpp"
-#include "util_raytracing/mesh.hpp"
-#include "util_raytracing/object.hpp"
-#include "util_raytracing/shader.hpp"
+module;
+
+#include <sharedutils/util_event_reply.hpp>
+#include <sharedutils/ctpl_stl.h>
 #include <prosper_context.hpp>
 #include <sharedutils/functioncallback.h>
 #include <pragma/rendering/c_rendermode.h>
@@ -17,12 +16,20 @@
 #include <pragma/game/c_game.h>
 #include <pragma/entities/environment/c_sky_camera.hpp>
 #include <pragma/entities/components/c_render_component.hpp>
+#include <future>
+#include <deque>
+#include <queue>
+
+module pragma.modules.scenekit;
+
+import pragma.scenekit;
+import :scene;
 
 using namespace pragma::modules;
 
 extern DLLCLIENT CGame *c_game;
 
-void cycles::Scene::Add3DSkybox(pragma::CSceneComponent &gameScene, pragma::CSkyCameraComponent &skyCam, const Vector3 &camPos)
+void scenekit::Scene::Add3DSkybox(pragma::CSceneComponent &gameScene, pragma::CSkyCameraComponent &skyCam, const Vector3 &camPos)
 {
 	std::unordered_map<CBaseEntity *, std::unordered_set<ModelSubMesh *>> entMeshes;
 	auto fIterateRenderQueue = [&entMeshes](pragma::rendering::RenderQueue &renderQueue) {

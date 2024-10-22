@@ -5,16 +5,13 @@
 * Copyright (c) 2023 Silverlan
 */
 
+module;
+
 #undef __SCENE_H__
-#include "pr_cycles/scene.hpp"
-#include "pr_cycles/subdivision.hpp"
 #include <prosper_context.hpp>
 #include <prosper_util.hpp>
 #include <cmaterialmanager.h>
 #include <cmaterial.h>
-#include <util_raytracing/mesh.hpp>
-#include <util_raytracing/object.hpp>
-#include <util_raytracing/model_cache.hpp>
 #include <pragma/c_engine.h>
 #include <pragma/clientstate/clientstate.h>
 #include <pragma/game/game_resources.hpp>
@@ -34,6 +31,18 @@
 #undef __UTIL_STRING_H__
 #include <sharedutils/util_string.h>
 #include <util_texture_info.hpp>
+#include <future>
+#include <deque>
+#include <queue>
+#include <opensubdiv/far/topologyDescriptor.h>
+#include <opensubdiv/far/primvarRefiner.h>
+
+module pragma.modules.scenekit;
+
+import pragma.scenekit;
+
+import :scene;
+import :subdivision;
 
 extern DLLCLIENT CEngine *c_engine;
 extern DLLCLIENT ClientState *client;
@@ -242,14 +251,14 @@ static std::optional<std::string> prepare_texture(TextureInfo *texInfo, Prepared
 	return result;
 }
 
-pragma::modules::cycles::Cache::Cache(unirender::Scene::RenderMode renderMode) : m_renderMode {renderMode}
+pragma::modules::scenekit::Cache::Cache(pragma::scenekit::Scene::RenderMode renderMode) : m_renderMode {renderMode}
 {
-	m_shaderCache = unirender::ShaderCache::Create();
-	m_mdlCache = unirender::ModelCache::Create();
+	m_shaderCache = pragma::scenekit::ShaderCache::Create();
+	m_mdlCache = pragma::scenekit::ModelCache::Create();
 	m_mdlCache->AddChunk(*m_shaderCache);
 }
 
-std::vector<std::shared_ptr<pragma::modules::cycles::Cache::MeshData>> pragma::modules::cycles::Cache::AddMeshList(Model &mdl, const std::vector<std::shared_ptr<ModelMesh>> &meshList, const std::string &meshName, BaseEntity *optEnt, const std::optional<umath::ScaledTransform> &opose,
+std::vector<std::shared_ptr<pragma::modules::scenekit::Cache::MeshData>> pragma::modules::scenekit::Cache::AddMeshList(Model &mdl, const std::vector<std::shared_ptr<ModelMesh>> &meshList, const std::string &meshName, BaseEntity *optEnt, const std::optional<umath::ScaledTransform> &opose,
   uint32_t skinId, pragma::CModelComponent *optMdlC, pragma::CAnimatedComponent *optAnimC, const std::function<bool(ModelMesh &, const umath::ScaledTransform &)> &optMeshFilter, const std::function<bool(ModelSubMesh &, const umath::ScaledTransform &)> &optSubMeshFilter,
   const std::function<void(ModelSubMesh &)> &optOnMeshAdded)
 {
@@ -284,7 +293,7 @@ std::vector<std::shared_ptr<pragma::modules::cycles::Cache::MeshData>> pragma::m
 	return meshDatas;
 }
 
-std::vector<std::shared_ptr<pragma::modules::cycles::Cache::MeshData>> pragma::modules::cycles::Cache::AddModel(Model &mdl, const std::string &meshName, BaseEntity *optEnt, const std::optional<umath::ScaledTransform> &pose, uint32_t skinId, pragma::CModelComponent *optMdlC,
+std::vector<std::shared_ptr<pragma::modules::scenekit::Cache::MeshData>> pragma::modules::scenekit::Cache::AddModel(Model &mdl, const std::string &meshName, BaseEntity *optEnt, const std::optional<umath::ScaledTransform> &pose, uint32_t skinId, pragma::CModelComponent *optMdlC,
   pragma::CAnimatedComponent *optAnimC, const std::function<bool(ModelMesh &, const umath::ScaledTransform &)> &optMeshFilter, const std::function<bool(ModelSubMesh &, const umath::ScaledTransform &)> &optSubMeshFilter, const std::function<void(ModelSubMesh &)> &optOnMeshAdded)
 {
 	std::vector<std::shared_ptr<ModelMesh>> lodMeshes {};
@@ -294,7 +303,7 @@ std::vector<std::shared_ptr<pragma::modules::cycles::Cache::MeshData>> pragma::m
 	return AddMeshList(mdl, lodMeshes, meshName, optEnt, pose, skinId, optMdlC, optAnimC, optMeshFilter, optSubMeshFilter, optOnMeshAdded);
 }
 
-std::vector<std::shared_ptr<pragma::modules::cycles::Cache::MeshData>> pragma::modules::cycles::Cache::AddEntityMesh(BaseEntity &ent, std::vector<ModelSubMesh *> *optOutTargetMeshes, const std::function<bool(ModelMesh &, const umath::ScaledTransform &)> &meshFilter,
+std::vector<std::shared_ptr<pragma::modules::scenekit::Cache::MeshData>> pragma::modules::scenekit::Cache::AddEntityMesh(BaseEntity &ent, std::vector<ModelSubMesh *> *optOutTargetMeshes, const std::function<bool(ModelMesh &, const umath::ScaledTransform &)> &meshFilter,
   const std::function<bool(ModelSubMesh &, const umath::ScaledTransform &)> &subMeshFilter, const std::string &nameSuffix, const std::optional<umath::ScaledTransform> &pose)
 {
 #if 0
@@ -311,7 +320,7 @@ std::vector<std::shared_ptr<pragma::modules::cycles::Cache::MeshData>> pragma::m
 	mdlC->UpdateLOD(0u);
 	auto animC = ent.GetComponent<CAnimatedComponent>();
 
-	unirender::PMesh mesh = nullptr;
+	pragma::scenekit::PMesh mesh = nullptr;
 	auto &mdlName = mdl->GetName();
 	auto shouldCache = false; //true;
 	if(ent.IsWorld())
@@ -398,7 +407,7 @@ std::vector<std::shared_ptr<pragma::modules::cycles::Cache::MeshData>> pragma::m
 	}
 	return meshDatas;
 }
-unirender::PObject pragma::modules::cycles::Cache::AddEntity(BaseEntity &ent, std::vector<ModelSubMesh *> *optOutTargetMeshes, const std::function<bool(ModelMesh &, const umath::ScaledTransform &)> &meshFilter,
+pragma::scenekit::PObject pragma::modules::scenekit::Cache::AddEntity(BaseEntity &ent, std::vector<ModelSubMesh *> *optOutTargetMeshes, const std::function<bool(ModelMesh &, const umath::ScaledTransform &)> &meshFilter,
   const std::function<bool(ModelSubMesh &, const umath::ScaledTransform &)> &subMeshFilter, const std::string &nameSuffix)
 {
 	auto meshDatas = AddEntityMesh(ent, optOutTargetMeshes, meshFilter, subMeshFilter, nameSuffix);
@@ -411,8 +420,8 @@ unirender::PObject pragma::modules::cycles::Cache::AddEntity(BaseEntity &ent, st
 	auto renderMode = m_renderMode;
 	// Create the object using the mesh
 	auto &t = ent.GetPose();
-	auto o = unirender::Object::Create(*mesh);
-	if(unirender::Scene::IsRenderSceneMode(renderMode) || unirender::Scene::IsLightmapRenderMode(renderMode)) {
+	auto o = pragma::scenekit::Object::Create(*mesh);
+	if(pragma::scenekit::Scene::IsRenderSceneMode(renderMode) || pragma::scenekit::Scene::IsLightmapRenderMode(renderMode)) {
 		o->SetPos(t.GetOrigin());
 		o->SetRotation(t.GetRotation());
 		o->SetScale(t.GetScale());
@@ -438,7 +447,7 @@ static bool load_hair_strand_data(util::HairStrandData &strandData, const udm::L
 	return true;
 }
 
-std::shared_ptr<pragma::modules::cycles::Cache::MeshData> pragma::modules::cycles::Cache::CalcMeshData(Model &mdl, ModelSubMesh &mdlMesh, bool includeAlphas, bool includeWrinkles, pragma::CModelComponent *optMdlC, pragma::CAnimatedComponent *optAnimC)
+std::shared_ptr<pragma::modules::scenekit::Cache::MeshData> pragma::modules::scenekit::Cache::CalcMeshData(Model &mdl, ModelSubMesh &mdlMesh, bool includeAlphas, bool includeWrinkles, pragma::CModelComponent *optMdlC, pragma::CAnimatedComponent *optAnimC)
 {
 	auto meshData = std::make_shared<MeshData>();
 	auto &meshVerts = mdlMesh.GetVertices();
@@ -470,7 +479,7 @@ std::shared_ptr<pragma::modules::cycles::Cache::MeshData> pragma::modules::cycle
 
 	for(auto vertIdx = decltype(meshVerts.size()) {0u}; vertIdx < meshVerts.size(); ++vertIdx) {
 		auto &v = meshVerts.at(vertIdx);
-		if(unirender::Scene::IsRenderSceneMode(m_renderMode)) {
+		if(pragma::scenekit::Scene::IsRenderSceneMode(m_renderMode)) {
 			// TODO: Do we really need the tangent?
 			Vector3 normalOffset {};
 			float wrinkle = 0.f;
@@ -583,19 +592,19 @@ std::shared_ptr<pragma::modules::cycles::Cache::MeshData> pragma::modules::cycle
 	return meshData;
 }
 
-Material *pragma::modules::cycles::Cache::GetMaterial(BaseEntity &ent, ModelSubMesh &subMesh, uint32_t skinId) const
+Material *pragma::modules::scenekit::Cache::GetMaterial(BaseEntity &ent, ModelSubMesh &subMesh, uint32_t skinId) const
 {
 	auto mdlC = ent.GetModelComponent();
 	return mdlC ? GetMaterial(static_cast<pragma::CModelComponent &>(*mdlC), subMesh, skinId) : nullptr;
 }
 
-Material *pragma::modules::cycles::Cache::GetMaterial(Model &mdl, ModelSubMesh &subMesh, uint32_t skinId) const
+Material *pragma::modules::scenekit::Cache::GetMaterial(Model &mdl, ModelSubMesh &subMesh, uint32_t skinId) const
 {
 	auto texIdx = mdl.GetMaterialIndex(subMesh, skinId);
 	return texIdx.has_value() ? mdl.GetMaterial(*texIdx) : nullptr;
 }
 
-Material *pragma::modules::cycles::Cache::GetMaterial(pragma::CModelComponent &mdlC, ModelSubMesh &subMesh, uint32_t skinId) const
+Material *pragma::modules::scenekit::Cache::GetMaterial(pragma::CModelComponent &mdlC, ModelSubMesh &subMesh, uint32_t skinId) const
 {
 	auto mdl = mdlC.GetModel();
 	if(mdl == nullptr)
@@ -604,7 +613,7 @@ Material *pragma::modules::cycles::Cache::GetMaterial(pragma::CModelComponent &m
 	return mdlC.GetRenderMaterial(baseTexIdx, skinId);
 }
 
-unirender::PShader pragma::modules::cycles::Cache::CreateShader(const std::string &meshName, Model &mdl, ModelSubMesh &subMesh, BaseEntity *optEnt, uint32_t skinId) const
+pragma::scenekit::PShader pragma::modules::scenekit::Cache::CreateShader(const std::string &meshName, Model &mdl, ModelSubMesh &subMesh, BaseEntity *optEnt, uint32_t skinId) const
 {
 	// Make sure all textures have finished loading
 	static_cast<msys::CMaterialManager &>(client->GetMaterialManager()).GetTextureManager().WaitForAllPendingCompleted();
@@ -619,7 +628,7 @@ unirender::PShader pragma::modules::cycles::Cache::CreateShader(const std::strin
 	return CreateShader(*mat, meshName, shaderInfo);
 }
 
-void pragma::modules::cycles::Cache::AddMesh(Model &mdl, unirender::Mesh &mesh, ModelSubMesh &mdlMesh, pragma::CModelComponent *optMdlC, pragma::CAnimatedComponent *optAnimC)
+void pragma::modules::scenekit::Cache::AddMesh(Model &mdl, pragma::scenekit::Mesh &mesh, ModelSubMesh &mdlMesh, pragma::CModelComponent *optMdlC, pragma::CAnimatedComponent *optAnimC)
 {
 	auto meshData = CalcMeshData(mdl, mdlMesh, mesh.HasAlphas(), mesh.HasWrinkles(), optMdlC, optAnimC);
 	if(meshData == nullptr)
@@ -627,7 +636,7 @@ void pragma::modules::cycles::Cache::AddMesh(Model &mdl, unirender::Mesh &mesh, 
 	AddMeshDataToMesh(mesh, *meshData);
 }
 
-unirender::PMesh pragma::modules::cycles::Cache::BuildMesh(const std::string &meshName, const std::vector<std::shared_ptr<MeshData>> &meshDatas, const std::optional<umath::ScaledTransform> &pose) const
+pragma::scenekit::PMesh pragma::modules::scenekit::Cache::BuildMesh(const std::string &meshName, const std::vector<std::shared_ptr<MeshData>> &meshDatas, const std::optional<umath::ScaledTransform> &pose) const
 {
 	uint64_t numVerts = 0;
 	uint64_t numTris = 0;
@@ -640,19 +649,19 @@ unirender::PMesh pragma::modules::cycles::Cache::BuildMesh(const std::string &me
 		hasWrinkles = hasWrinkles || meshData->wrinkles.has_value();
 	}
 
-	auto flags = unirender::Mesh::Flags::None;
+	auto flags = pragma::scenekit::Mesh::Flags::None;
 	if(hasAlphas)
-		flags |= unirender::Mesh::Flags::HasAlphas;
+		flags |= pragma::scenekit::Mesh::Flags::HasAlphas;
 	if(hasWrinkles)
-		flags |= unirender::Mesh::Flags::HasWrinkles;
-	auto mesh = unirender::Mesh::Create(meshName, numVerts, numTris / 3, flags);
+		flags |= pragma::scenekit::Mesh::Flags::HasWrinkles;
+	auto mesh = pragma::scenekit::Mesh::Create(meshName, numVerts, numTris / 3, flags);
 	m_mdlCache->GetChunks().front().AddMesh(*mesh);
 	for(auto &meshData : meshDatas)
 		AddMeshDataToMesh(*mesh, *meshData, pose);
 	return mesh;
 }
 
-void pragma::modules::cycles::Cache::AddMeshDataToMesh(unirender::Mesh &mesh, const MeshData &meshData, const std::optional<umath::ScaledTransform> &pose) const
+void pragma::modules::scenekit::Cache::AddMeshDataToMesh(pragma::scenekit::Mesh &mesh, const MeshData &meshData, const std::optional<umath::ScaledTransform> &pose) const
 {
 	auto triIndexVertexOffset = mesh.GetVertexOffset();
 	auto shaderIdx = mesh.AddSubMeshShader(*meshData.shader);
@@ -678,7 +687,7 @@ void pragma::modules::cycles::Cache::AddMeshDataToMesh(unirender::Mesh &mesh, co
 		mesh.AddHairStrandData(*meshData.hairStrandData, shaderIdx);
 }
 
-void pragma::modules::cycles::Cache::AddAOBakeTarget(BaseEntity *optEnt, Model &mdl, uint32_t matIndex, std::shared_ptr<unirender::Object> &oAo, std::shared_ptr<unirender::Object> &oEnv)
+void pragma::modules::scenekit::Cache::AddAOBakeTarget(BaseEntity *optEnt, Model &mdl, uint32_t matIndex, std::shared_ptr<pragma::scenekit::Object> &oAo, std::shared_ptr<pragma::scenekit::Object> &oEnv)
 {
 	std::vector<std::shared_ptr<MeshData>> materialMeshes;
 	std::vector<std::shared_ptr<MeshData>> envMeshes;
@@ -701,7 +710,7 @@ void pragma::modules::cycles::Cache::AddAOBakeTarget(BaseEntity *optEnt, Model &
 	// We'll create a separate mesh from all model meshes which use the specified material.
 	// This way we can map the uv coordinates to the ao output texture more easily.
 	auto mesh = BuildMesh("ao_target", materialMeshes);
-	oAo = unirender::Object::Create(*mesh);
+	oAo = pragma::scenekit::Object::Create(*mesh);
 	m_mdlCache->GetChunks().front().AddObject(*oAo);
 
 	oEnv = nullptr;
@@ -714,11 +723,11 @@ void pragma::modules::cycles::Cache::AddAOBakeTarget(BaseEntity *optEnt, Model &
 	// The actual ao bake target (see code above) has to be the first mesh added to the scene, otherwise the ao result may be incorrect.
 	// The reason for this is currently unknown.
 	auto meshEnv = BuildMesh("ao_mesh", envMeshes);
-	oEnv = unirender::Object::Create(*meshEnv);
+	oEnv = pragma::scenekit::Object::Create(*meshEnv);
 	m_mdlCache->GetChunks().front().AddObject(*oEnv);
 }
 
-void pragma::modules::cycles::Cache::AddAOBakeTarget(BaseEntity &ent, uint32_t matIndex, std::shared_ptr<unirender::Object> &oAo, std::shared_ptr<unirender::Object> &oEnv)
+void pragma::modules::scenekit::Cache::AddAOBakeTarget(BaseEntity &ent, uint32_t matIndex, std::shared_ptr<pragma::scenekit::Object> &oAo, std::shared_ptr<pragma::scenekit::Object> &oEnv)
 {
 	auto mdl = ent.GetModel();
 	if(mdl == nullptr)
@@ -726,4 +735,4 @@ void pragma::modules::cycles::Cache::AddAOBakeTarget(BaseEntity &ent, uint32_t m
 	AddAOBakeTarget(&ent, *mdl, matIndex, oAo, oEnv);
 }
 
-void pragma::modules::cycles::Cache::AddAOBakeTarget(Model &mdl, uint32_t matIndex, std::shared_ptr<unirender::Object> &oAo, std::shared_ptr<unirender::Object> &oEnv) { AddAOBakeTarget(nullptr, mdl, matIndex, oAo, oEnv); }
+void pragma::modules::scenekit::Cache::AddAOBakeTarget(Model &mdl, uint32_t matIndex, std::shared_ptr<pragma::scenekit::Object> &oAo, std::shared_ptr<pragma::scenekit::Object> &oEnv) { AddAOBakeTarget(nullptr, mdl, matIndex, oAo, oEnv); }
