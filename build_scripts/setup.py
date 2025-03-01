@@ -244,7 +244,7 @@ if not Path(utilocio_root).is_dir():
     os.chdir(root +"/external_libs")
     git_clone("https://github.com/Silverlan/util_ocio.git","util_ocio")
 os.chdir(utilocio_root)
-reset_to_commit("19d48ea21c58f79d7359075197c786c705d7817f")
+reset_to_commit("0212aaa174ce92ef7ad82a35e70400d57da83120")
 
 cmake_args.append("-DDEPENDENCY_UTIL_OCIO_INCLUDE=" +utilocio_root +"/include")
 
