@@ -315,6 +315,6 @@ if not Path(unirender_root).is_dir():
     git_clone("https://github.com/Silverlan/UniRender.git","util_raytracing")
 
 os.chdir(unirender_root)
-reset_to_commit("59de5fa27af7fb7c12cf9904d19c15866eec7a73")
+reset_to_commit("53db6269c956383a1141df4a1728c1b2c3c65ceb")
 
 cmake_args.append("-DDEPENDENCY_UTIL_RAYTRACING_INCLUDE=" +unirender_root +"/include")
