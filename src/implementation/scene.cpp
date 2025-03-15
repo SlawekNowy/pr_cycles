@@ -260,11 +260,9 @@ pragma::scenekit::PShader scenekit::Cache::CreateShader(Material &mat, const std
 	if(ustring::compare<std::string>(matShader, "nodraw", false))
 		return nullptr;
 	std::string cyclesShader = "pbr";
-	auto &dataBlock = mat.GetDataBlock();
-	auto cyclesBlock = dataBlock->GetBlock("unirender");
 	auto &shaderManager = get_shader_manager();
-	if(cyclesBlock)
-		cyclesShader = cyclesBlock->GetString("shader", "pbr");
+	if(mat.HasPropertyBlock("cycles"))
+		cyclesShader = mat.GetProperty<std::string>("cycles/shader", "pbr");
 	else {
 		auto matShader = mat.GetShaderIdentifier();
 		ustring::to_lower(matShader);
