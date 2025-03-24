@@ -38,6 +38,17 @@ if use_prebuilt_binaries:
 	cycles_deps_dir = cycles_deps_dir +"/" +clone_dir_name
 	cmake_args.append("-DUNIRENDER_PREBUILT_BINARY_LOCATION=" +cycles_deps_dir)
 
+	# Patch openvdb
+	# Due to a clang compiler error, we have to apply a patch for openvdb manually for now.
+	if platform == "linux":
+		print_msg("Applying openvdb patch...")
+		openvdb_root = deps_dir +"/cycles/lib/linux_x64/openvdb"
+		script_dir = os.path.dirname(os.path.abspath(__file__))
+		os.chdir(script_dir)
+		with open("openvdb.patch", "rb") as patch_file:
+			patch_data = patch_file.read()
+		subprocess.run(["patch", openvdb_root +"/include/nanovdb/util/GridBuilder.h"], input=patch_data)
+
 	# OIDN
 	oidn_root = cycles_deps_dir +"/openimagedenoise"
 	cmake_args.append("-DDEPENDENCY_OPENIMAGEDENOISE_INCLUDE=" +oidn_root +"/include")
