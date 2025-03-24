@@ -96,11 +96,17 @@ oidn_root_dir = cyclesDepsRoot + "/openimagedenoise"
 # changed since the last build.
 curCommitId = subprocess.check_output(["git","rev-parse","HEAD"]).decode(sys.stdout.encoding)
 if lastBuildCommit != curCommitId:
+	args = []
 	if platform == "linux":
 		zlib = zlib_root +"/build/libz.a"
+		args.append("-DWITH_CYCLES_CUDA_BINARIES=OFF")
+		args.append("-DWITH_CYCLES_DEVICE_OPTIX=OFF")
+		args.append("-DWITH_CYCLES_DEVICE_CUDA=OFF")
 	else:
 		zlib = zlib_lib
-	args = ["-DWITH_CYCLES_CUDA_BINARIES=ON","-DWITH_CYCLES_DEVICE_OPTIX=ON","-DWITH_CYCLES_DEVICE_CUDA=ON"]
+		args.append("-DWITH_CYCLES_CUDA_BINARIES=ON")
+		args.append("-DWITH_CYCLES_DEVICE_OPTIX=ON")
+		args.append("-DWITH_CYCLES_DEVICE_CUDA=ON")
 	
 	# OSL is disabled because we don't need it and it causes build errors on the GitHub runner.
 	args.append("-DWITH_CYCLES_OSL=OFF")
