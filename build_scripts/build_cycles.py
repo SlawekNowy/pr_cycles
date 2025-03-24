@@ -231,8 +231,8 @@ cyclesCmakeCacheFile = cyclesRoot +"/build/CMakeCache.txt"
 
 strIdx = open(cyclesCmakeCacheFile, 'r').read().find('WITH_CYCLES_DEVICE_CUDA:BOOL=OFF')
 if strIdx != -1:
-	print_warning("CUDA is disabled for Cycles! Is CUDA installed on the system?")
+	print_msg("CUDA is disabled for Cycles! Is CUDA installed on the system?")
 
 strIdx = open(cyclesCmakeCacheFile, 'r').read().find('WITH_CYCLES_DEVICE_OPTIX:BOOL=OFF')
 if strIdx != -1:
-	print_warning("OptiX is disabled for Cycles! Is OptiX installed on the system?")
+	print_msg("OptiX is disabled for Cycles! Is OptiX installed on the system?")
