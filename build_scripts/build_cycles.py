@@ -85,8 +85,20 @@ if platform == "linux":
 else:
 	subprocess.run(["make.bat","update"],check=True)
 
+if platform == "linux":
+	# Patch openvdb
+	# Due to a clang compiler error, we have to apply a patch for openvdb manually for now.
+	print_msg("Applying openvdb patch...")
+	openvdb_root = deps_dir +"/cycles/lib/linux_x64/openvdb"
+	script_dir = os.path.dirname(os.path.abspath(__file__))
+	os.chdir(script_dir)
+	with open("openvdb.patch", "rb") as patch_file:
+		patch_data = patch_file.read()
+	subprocess.run(["patch", "-N", openvdb_root +"/include/nanovdb/util/GridBuilder.h"], input=patch_data)
+
 print_msg("Build cycles")
 
+os.chdir(cyclesRoot)
 mkdir("build",cd=True)
 oiio_root_dir = cyclesDepsRoot + "/openimageio"
 oidn_root_dir = cyclesDepsRoot + "/openimagedenoise"
