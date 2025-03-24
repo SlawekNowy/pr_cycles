@@ -8,8 +8,8 @@ from pathlib import Path
 os.chdir(deps_dir)
 
 # These need to match the cycles version that is being used (see build_cycles.py for more information)
-cycles_lib_windows_x64_commit_sha = "30392df"
-cycles_lib_linux_x64_commit_sha = "4d2e4b4"
+cycles_lib_windows_x64_commit_sha = "1a8571a"
+cycles_lib_linux_x64_commit_sha = "87f8577"
 use_prebuilt_binaries = True
 
 if use_prebuilt_binaries:
