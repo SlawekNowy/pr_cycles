@@ -262,7 +262,7 @@ if platform == "win32":
 	print_msg("Build ocio")
 	mkdir("build",cd=True)
 
-	cmake_configure("..",generator)
+	cmake_configure("..",generator,["-DCMAKE_POLICY_VERSION_MINIMUM=4.0"])
 	cmake_build(build_config)
 
 	cp(glog_root +"/src/glog/log_severity.h",glog_root +"/build/glog/")
@@ -286,7 +286,7 @@ if platform == "win32":
 	print_msg("Build gflags")
 	mkdir("build_files",cd=True)
 
-	cmake_configure("..",generator)
+	cmake_configure("..",generator,["-DCMAKE_POLICY_VERSION_MINIMUM=4.0"])
 	cmake_build(build_config)
 
 	cmake_args.append("-DDEPENDENCY_GFLAGS_INCLUDE=" +gflags_root +"/build_files/include")
