@@ -40,11 +40,9 @@ namespace pragma::asset {
 #include <pragma/entities/components/lightmap_data_cache.hpp>
 #include <pragma/entities/entity_component_system_t.hpp>
 #include <pragma/util/util_game.hpp>
-#include <pragma/rendering/renderers/rasterization_renderer.hpp>
 #include <pragma/rendering/occlusion_culling/occlusion_culling_handler_bsp.hpp>
 #include <pragma/lua/classes/ldef_entity.h>
 #include <pragma/lua/libraries/lfile.h>
-#include <pragma/lua/c_lentity_handles.hpp>
 #include <pragma/lua/policies/shared_from_this_policy.hpp>
 #include <pragma/lua/libraries/lfile.h>
 #include <pragma/rendering/raytracing/cycles.hpp>
@@ -52,10 +50,8 @@ namespace pragma::asset {
 #include <pragma/entities/components/c_scene_component.hpp>
 #include <pragma/lua/converters/game_type_converters_t.hpp>
 #include <pragma/lua/converters/optional_converter_t.hpp>
-#
 
 #include <luainterface.hpp>
-#include <pragma/lua/lua_entity_component.hpp>
 #include <pragma/lua/libraries/lutil.hpp>
 #include <pragma/lua/lua_call.hpp>
 
