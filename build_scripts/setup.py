@@ -8,8 +8,8 @@ from pathlib import Path
 os.chdir(deps_dir)
 
 # These need to match the cycles version that is being used (see build_cycles.py for more information)
-cycles_lib_windows_x64_commit_sha = "30392df"
-cycles_lib_linux_x64_commit_sha = "4d2e4b4"
+cycles_lib_windows_x64_commit_sha = "1a8571a"
+cycles_lib_linux_x64_commit_sha = "87f8577"
 use_prebuilt_binaries = True
 
 if use_prebuilt_binaries:
@@ -245,7 +245,7 @@ if not Path(utilocio_root).is_dir():
     os.chdir(root +"/external_libs")
     git_clone("https://github.com/Silverlan/util_ocio.git","util_ocio")
 os.chdir(utilocio_root)
-reset_to_commit("19d48ea21c58f79d7359075197c786c705d7817f")
+reset_to_commit("0212aaa174ce92ef7ad82a35e70400d57da83120")
 
 cmake_args.append("-DDEPENDENCY_UTIL_OCIO_INCLUDE=" +utilocio_root +"/include")
 
@@ -263,7 +263,7 @@ if platform == "win32":
 	print_msg("Build ocio")
 	mkdir("build",cd=True)
 
-	cmake_configure("..",generator)
+	cmake_configure("..",generator,["-DCMAKE_POLICY_VERSION_MINIMUM=4.0"])
 	cmake_build(build_config)
 
 	cp(glog_root +"/src/glog/log_severity.h",glog_root +"/build/glog/")
@@ -287,7 +287,7 @@ if platform == "win32":
 	print_msg("Build gflags")
 	mkdir("build_files",cd=True)
 
-	cmake_configure("..",generator)
+	cmake_configure("..",generator,["-DCMAKE_POLICY_VERSION_MINIMUM=4.0"])
 	cmake_build(build_config)
 
 	cmake_args.append("-DDEPENDENCY_GFLAGS_INCLUDE=" +gflags_root +"/build_files/include")
@@ -302,7 +302,7 @@ if build_cycles:
         git_clone("https://github.com/Silverlan/render_raytracing.git")
 
     os.chdir(rr_tool_root)
-    reset_to_commit("10293584e1c4ae5d674dcdc9b3c82e354e561a11")
+    reset_to_commit("daabcd2d7e63525e22c0573448cfbcda0a2f3394")
 
     additional_build_targets.append("render_raytracing")
 #else:
@@ -316,6 +316,6 @@ if not Path(unirender_root).is_dir():
     git_clone("https://github.com/Slaweknowy/UniRender.git","util_raytracing")
 
 os.chdir(unirender_root)
-reset_to_commit("932b161df373e293216b72a21c62df5b505ff003")
+reset_to_commit("9a977f4ec1700d1cc7abe513ab4166c99e8c3eba")
 
 cmake_args.append("-DDEPENDENCY_UTIL_RAYTRACING_INCLUDE=" +unirender_root +"/include")

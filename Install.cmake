@@ -9,6 +9,8 @@ else()
     set(BIN_DIR "lib/")
 endif()
 
+set(CYCLES_INSTALL_DIR "${INSTALL_PATH}/cycles")
+
 # Install util_raytracing
 pr_install_targets(util_raytracing)
 pr_install_binary(opencolorio WIN "OpenColorIO_2_3.dll" LIN "libOpenColorIO.so" BIN_DIR "${UNIRENDER_PREBUILT_BINARY_LOCATION}/opencolorio/${BIN_DIR}")
@@ -33,7 +35,6 @@ endif()
 
 # Cycles
 if(PR_UNIRENDER_WITH_CYCLES)
-    set(CYCLES_INSTALL_DIR "${INSTALL_PATH}/cycles")
     pr_install_create_directory("${CYCLES_INSTALL_DIR}/cache/kernels")
     pr_install_targets(UniRender_cycles INSTALL_DIR "${CYCLES_INSTALL_DIR}")
     if(NOT "${DEPENDENCY_CYCLES_BUILD_LOCATION}" STREQUAL "")

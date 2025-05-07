@@ -325,7 +325,8 @@ std::vector<std::shared_ptr<pragma::modules::scenekit::Cache::MeshData>> pragma:
 	auto shouldCache = false; //true;
 	if(ent.IsWorld())
 		shouldCache = false;
-	if(mdlC->GetMaterialOverrides().empty() == false)
+	auto *materialOverrideC = mdlC->GetMaterialOverrideComponent();
+	if(materialOverrideC)
 		shouldCache = false; // Don't use cache if the entity uses material overrides
 	if(animC.valid() && animC->GetAnimation() != -1)
 		shouldCache = false; // Don't use cache if the entity is animated

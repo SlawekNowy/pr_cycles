@@ -12,7 +12,7 @@ import subprocess
 # - Update the versions of tbb, oidn, ocio, oiio, opensubdiv libraries in setup.py to match cycles versions
 # - Go to https://github.com/blender/cycles/tree/main/lib for the commit of the cycles version
 #   - Grab the commit ids for linux_x64 and windows_x64 and apply them to cycles_lib_*_x64_commit_sha in setup.py
-cycles_commit_sha = "f0d593ed7d0574fe113557612b78dfdaf4ee4203" # Version 4.1.1
+cycles_commit_sha = "cf016abb670b255ea25f38fddaf53c78e5cbb8f3" # Version 4.1.1
 
 ########## cycles ##########
 os.chdir(deps_dir)
@@ -85,8 +85,20 @@ if platform == "linux":
 else:
 	subprocess.run(["make.bat","update"],check=True)
 
+if platform == "linux":
+	# Patch openvdb
+	# Due to a clang compiler error, we have to apply a patch for openvdb manually for now.
+	print_msg("Applying openvdb patch...")
+	openvdb_root = deps_dir +"/cycles/lib/linux_x64/openvdb"
+	script_dir = os.path.dirname(os.path.abspath(__file__))
+	os.chdir(script_dir)
+	with open("openvdb.patch", "rb") as patch_file:
+		patch_data = patch_file.read()
+	subprocess.run(["patch", "-N", openvdb_root +"/include/nanovdb/util/GridBuilder.h"], input=patch_data)
+
 print_msg("Build cycles")
 
+os.chdir(cyclesRoot)
 mkdir("build",cd=True)
 oiio_root_dir = cyclesDepsRoot + "/openimageio"
 oidn_root_dir = cyclesDepsRoot + "/openimagedenoise"
@@ -96,11 +108,17 @@ oidn_root_dir = cyclesDepsRoot + "/openimagedenoise"
 # changed since the last build.
 curCommitId = subprocess.check_output(["git","rev-parse","HEAD"]).decode(sys.stdout.encoding)
 if lastBuildCommit != curCommitId:
+	args = []
 	if platform == "linux":
 		zlib = zlib_root +"/build/libz.a"
+		args.append("-DWITH_CYCLES_CUDA_BINARIES=OFF")
+		args.append("-DWITH_CYCLES_DEVICE_OPTIX=OFF")
+		args.append("-DWITH_CYCLES_DEVICE_CUDA=OFF")
 	else:
 		zlib = zlib_lib
-	args = ["-DWITH_CYCLES_CUDA_BINARIES=ON","-DWITH_CYCLES_DEVICE_OPTIX=ON","-DWITH_CYCLES_DEVICE_CUDA=ON"]
+		args.append("-DWITH_CYCLES_CUDA_BINARIES=ON")
+		args.append("-DWITH_CYCLES_DEVICE_OPTIX=ON")
+		args.append("-DWITH_CYCLES_DEVICE_CUDA=ON")
 	
 	# OSL is disabled because we don't need it and it causes build errors on the GitHub runner.
 	args.append("-DWITH_CYCLES_OSL=OFF")
@@ -213,8 +231,8 @@ cyclesCmakeCacheFile = cyclesRoot +"/build/CMakeCache.txt"
 
 strIdx = open(cyclesCmakeCacheFile, 'r').read().find('WITH_CYCLES_DEVICE_CUDA:BOOL=OFF')
 if strIdx != -1:
-	print_warning("CUDA is disabled for Cycles! Is CUDA installed on the system?")
+	print_msg("CUDA is disabled for Cycles! Is CUDA installed on the system?")
 
 strIdx = open(cyclesCmakeCacheFile, 'r').read().find('WITH_CYCLES_DEVICE_OPTIX:BOOL=OFF')
 if strIdx != -1:
-	print_warning("OptiX is disabled for Cycles! Is OptiX installed on the system?")
+	print_msg("OptiX is disabled for Cycles! Is OptiX installed on the system?")
